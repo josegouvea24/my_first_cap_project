@@ -1,0 +1,12 @@
+Install CAP SDK: npm install -g @sap/cds-dk
+Create new CAP project: cds init my-cap-project
+Install Node.js dependencies: npm install
+Run service: cds watch
+Compile schema into SQl: cds compile db/schema.cds --to sql (or CDS Preview -> Preview as sql in .cds context menu)
+Configure SQLite for development: npm add @cap-js/sqlite -D
+Configure SAP HANA Cloud for production: npm add @sap/cds-hana
+Inspect the effective database configuration: cds env cds.requires.db
+Generating .csv data files: cds add data
+Deploy database (Creates tables/views according to the db CDS model and fills in the initial data from the provided .csv): cds deploy
+Redeploy database after changes to model/data (all tables/views are dropped and recreated): cds deploy
+

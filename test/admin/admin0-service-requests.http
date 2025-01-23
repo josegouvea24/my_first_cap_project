@@ -1,0 +1,120 @@
+@baseUrl = http://localhost:4004
+
+#Get Service Document
+GET {{baseUrl}}/admin
+
+### ------------------------------------------------------------------------
+# Get Service Metadata Document
+GET {{baseUrl}}/admin/$metadata
+
+### ------------------------------------------------------------------------
+# Get all Authors
+GET {{baseUrl}}/admin/Authors?$expand=epoch
+
+### ------------------------------------------------------------------------
+# Get all Books
+GET {{baseUrl}}/admin/Books
+
+### ------------------------------------------------------------------------
+# Get all Books with author info
+GET {{baseUrl}}/admin/Books?$expand=author
+
+### ------------------------------------------------------------------------
+# Get all Orders with item info
+GET {{baseUrl}}/admin/Orders?$expand=items($expand=book($expand=author))
+
+### ------------------------------------------------------------------------
+# Get all books localized in German
+GET {{baseUrl}}/admin/Books?sap-language=de
+
+### ------------------------------------------------------------------------
+# Get all books with language en with inlined publication country and currency
+GET {{baseUrl}}/admin/Books?$expand=publCountry,price_currency
+Accept-Language: en
+
+### ------------------------------------------------------------------------
+# Get all books with language pt with inlined publication country and currency
+GET {{baseUrl}}/admin/Books?$expand=publCountry,price_currency
+Accept-Language: pt
+
+### ------------------------------------------------------------------------
+# Get all authors with lenguage en with inlined epoch~
+GET {{baseUrl}}/admin/Authors?$expand=epoch
+Accept-Language: en
+
+### ------------------------------------------------------------------------
+# Get all authors with lenguage pt with inlined epoch
+GET {{baseUrl}}/admin/Authors?$expand=epoch
+Accept-Language: pt
+
+### ------------------------------------------------------------------------
+# Create a new author with empty name and invalid epoch ID
+POST {{baseUrl}}/admin/Authors
+Content-Type: application/json
+
+{
+  "name": "",
+  "dateOfBirth": "1759-11-10",
+  "dateOfDeath": "1805-05-09",  
+  "epoch": {"ID": "EP-007"}
+}
+
+### ------------------------------------------------------------------------
+# Create a new book with empty title, invalid author ID and invalid genre
+POST {{baseUrl}}/admin/Books
+Content-Type: application/json
+
+{
+  "title": "",
+  "author_ID": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+  "genre": 3
+}
+
+### ------------------------------------------------------------------------
+# Retrieve the ID of William Shakespeare
+# @name getShakespeare
+GET {{baseUrl}}/admin/Authors?$filter=name eq 'William Shakespeare'
+
+@authorID = {{getShakespeare.response.body.$.value[0].ID}}
+
+### ------------------------------------------------------------------------
+# Create a new auther and retrieve its authorID
+# @name createNewAuthor
+POST {{baseUrl}}/admin/Authors
+Content-Type: application/json
+
+{
+  "name": "Initial Version"
+}
+###
+@authorID = {{createNewAuthor.response.body.$.ID}}
+###
+# Read the newly created author for editing a first time and retrieve its current ETag
+GET {{baseUrl}}/admin/Authors({{authorID}})
+###
+@ETag1 = {{createNewAuthor.response.headers.ETag}}
+### Read the newly created author for editing a second time
+# Read the newly created author for editing a second time and assign the received ETag to the variable ETag2
+GET {{baseUrl}}/admin/Authors({{authorID}})
+###
+@ETag2 = {{createNewAuthor.response.headers.ETag}}
+###
+# Update the newly created author using ETag1 received when the Author was first read.
+# The update implicitly creates a new ETag value. This will succeed because ETag1 and Etag2 match (no changes have been made yet)
+PUT {{baseUrl}}/admin/Authors({{authorID}})
+If-Match: {{ETag1}}
+Content-Type: application/json
+
+{
+  "name": "Update 1 of Initial Version"
+}
+### 
+# Try another update using ETag2 received when the author was read for the second time.
+# This will fail with a HTTP status code 412 Precondition Failed.
+PUT {{baseUrl}}/admin/Authors({{authorID}})
+If-Match: {{ETag2}}
+Content-Type: application/json
+
+{
+  "name": "Update 2 of Initial Version"
+}
