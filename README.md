@@ -8,6 +8,7 @@ File or Folder | Purpose
 `db/` | domain models and data
 `srv/` | service models and code
 `test/` | HTTP service test requests
+`i18n/` | text bundle files
 `package.json` | project metadata and configuration
 `readme.md` | this getting started guide
 
